@@ -1,0 +1,18 @@
+{
+  "SimpleVertex": {
+    "type": "vertex",
+    "file": "shaders/simple.vert"
+  },
+  "SimpleFragment": {
+    "type": "fragment",
+    "file": "shaders/simple.frag"
+  },
+  "UnlitTextureVertex": {
+    "type": "vertex",
+    "file": "shaders/unlit_texture.vert"
+  },
+  "UnlitTextureFragment": {
+    "type": "fragment",
+    "file": "shaders/unlit_texture.frag"
+  }
+}
