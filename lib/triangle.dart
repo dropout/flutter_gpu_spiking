@@ -14,77 +14,81 @@ class TrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
 
-    /// Allocate a new renderable texture.
-    final gpu.Texture renderTexture = gpu.gpuContext.createTexture(
-      gpu.StorageMode.devicePrivate, size.width.toInt(), size.height.toInt(),
+    // Creating a multisample buffer (4 samples)
+    final msaaTexture = gpu.gpuContext.createTexture(
+      gpu.StorageMode.devicePrivate,
+      size.width.toInt(),
+      size.height.toInt(),
+      sampleCount: 4,
+    );
+
+    // Create the final destination (1 sample)
+    final resolveTexture = gpu.gpuContext.createTexture(
+      gpu.StorageMode.devicePrivate,
+      size.width.toInt(),
+      size.height.toInt(),
+      sampleCount: 1,
       enableRenderTargetUsage: true,
       enableShaderReadUsage: true,
       coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
     );
 
-    /// Create the command buffer. This will be used to submit all encoded
-    /// commands at the end.
+    // Create the command buffer.
+    // This will be used to submit all encoded commands at the end.
     final commandBuffer = gpu.gpuContext.createCommandBuffer();
 
-    /// Define a render target. This is just a collection of attachments that a
-    /// RenderPass will write to.
+    // Define a render target. This is just a collection of attachments that a
+    // RenderPass will write to.
     final renderTarget = gpu.RenderTarget.singleColor(
       gpu.ColorAttachment(
-        texture: renderTexture,
+        texture: msaaTexture,
+        resolveTexture: resolveTexture,
+        storeAction: gpu.StoreAction.multisampleResolve,
+        loadAction: gpu.LoadAction.clear,
         clearValue: colorToVector4(Colors.deepPurpleAccent),
       ),
-      // depthStencilAttachment: gpu.DepthStencilAttachment(texture: depthTexture),
     );
 
-    /// Add a render pass encoder to the command buffer so that we can start
-    /// encoding commands.
-    final pass = commandBuffer.createRenderPass(renderTarget);
+    // Add a render pass encoder to the command buffer so that we can start
+    // encoding commands.
+    final renderPass = commandBuffer.createRenderPass(renderTarget);
 
-    /// Create a RenderPipeline using shaders from the asset.
+    // Create a RenderPipeline using shaders from the asset.
     final vertex = shaderLibrary['SimpleVertex']!;
     final fragment = shaderLibrary['SimpleFragment']!;
     final pipeline = gpu.gpuContext.createRenderPipeline(vertex, fragment);
 
-    pass.bindPipeline(pipeline);
+    // Bind the pipeline so that subsequent draw calls use it.
+    renderPass.bindPipeline(pipeline);
 
-    /// (Optional) Configure blending for the first color attachment.
-    pass.setColorBlendEnable(true);
-    pass.setColorBlendEquation(
-      gpu.ColorBlendEquation(
-        colorBlendOperation: gpu.BlendOperation.add,
-        sourceColorBlendFactor: gpu.BlendFactor.one,
-        destinationColorBlendFactor: gpu.BlendFactor.oneMinusSourceAlpha,
-        alphaBlendOperation: gpu.BlendOperation.add,
-        sourceAlphaBlendFactor: gpu.BlendFactor.one,
-        destinationAlphaBlendFactor: gpu.BlendFactor.oneMinusSourceAlpha
-      )
-    );
+    // Append quick geometry and uniforms to a host buffer that will be
+    // automatically uploaded to the GPU later on.
+    final hostBuffer = gpu.gpuContext.createHostBuffer();
 
-    /// Append quick geometry and uniforms to a host buffer that will be
-    /// automatically uploaded to the GPU later on.
-    final transients = gpu.gpuContext.createHostBuffer();
-    final vertices = transients.emplace(float32(<double>[
-      -0.5, -0.5, //
-      0, 0.5, //
-      0.5, -0.5, //
+    // 0, 0 is at the center of the screen.
+    final vertices = hostBuffer.emplace(float32(<double>[
+      -0.5, -0.5, // Bottom Left
+      0.0, 0.5, // Top Center
+      0.5, -0.5, // Bottom Right
     ]));
 
+    // Bind the vertex data. In this case, we won't bother binding an index
+    // buffer, since triangles can be drawn directly from the vertex buffer.
+    renderPass.bindVertexBuffer(vertices, 3);
 
-    /// Bind the vertex data. In this case, we won't bother binding an index
-    /// buffer.
-    pass.bindVertexBuffer(vertices, 3);
+    // And finally, we append a draw call.
+    renderPass.draw();
 
-    /// And finally, we append a draw call.
-    pass.draw();
-
-    /// Submit all of the previously encoded passes. Passes are encoded in the
-    /// same order they were created in.
+    // Submit all of the previously encoded passes. Passes are encoded in the
+    // same order they were created in.
     commandBuffer.submit();
 
-    /// Wrap the Flutter GPU texture as a ui.Image and draw it like normal!
-    final image = renderTexture.asImage();
-
-    canvas.drawImage(image, Offset(0, 0), Paint());
+    // Wrap the Flutter GPU texture as a ui.Image and draw it like normal!
+    canvas.drawImage(
+      resolveTexture.asImage(),
+      Offset(0, 0),
+      Paint()
+    );
   }
 
   @override
@@ -100,33 +104,35 @@ class TrianglePage extends StatefulWidget {
 }
 
 class _TrianglePageState extends State<TrianglePage> {
-  Ticker? tick;
-  double time = 0;
-  double deltaSeconds = 0;
-  double seedX = -0.512511498387847167;
-  double seedY = 0.521295573094847167;
+
+  late final Ticker ticker;
 
   @override
   void initState() {
-    tick = Ticker(
+    ticker = Ticker(
       (elapsed) {
         setState(() {
-          double previousTime = time;
-          time = elapsed.inMilliseconds / 1000.0;
-          deltaSeconds = previousTime > 0 ? time - previousTime : 0;
+
         });
       },
     );
-    tick!.start();
+    ticker.start();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
+    return const SizedBox.expand(
       child: CustomPaint(
         painter: TrianglePainter(),
       )
     );
   }
+
+  @override
+  void dispose() {
+    ticker.dispose();
+    super.dispose();
+  }
+
 }
