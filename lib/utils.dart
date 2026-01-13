@@ -1,19 +1,25 @@
 import 'dart:typed_data';
-import 'dart:ui';
 
+import 'package:flutter/material.dart' as mtl;
 import 'package:vector_math/vector_math.dart';
 
-ByteData float32(List<double> values) =>
-  Float32List.fromList(values).buffer.asByteData();
+extension MaterialColorExtension on mtl.MaterialColor {
+  Vector4 toVector4() => Vector4(r, g, b, a);
+}
 
-ByteData uint16(List<int> values) =>
-  Uint16List.fromList(values).buffer.asByteData();
+extension ColorExt on mtl.Color {
+  Vector4 toVector4() => Vector4(r, g, b, a);
+}
 
-ByteData uint32(List<int> values) =>
-  Uint32List.fromList(values).buffer.asByteData();
+extension ListExtDouble on List<double> {
+  ByteData toFloat32() => Float32List.fromList(this).buffer.asByteData();
+}
 
-ByteData float32Mat(Matrix4 matrix) =>
-  Float32List.fromList(matrix.storage).buffer.asByteData();
+extension ListExtInt on List<int> {
+  ByteData toUint16() => Uint16List.fromList(this).buffer.asByteData();
+  ByteData toUint32() => Uint32List.fromList(this).buffer.asByteData();
+}
 
-Vector4 colorToVector4(Color color) =>
-  Vector4(color.r, color.g, color.b, color.a);
+extension MatrixExt on Matrix4 {
+  ByteData toFloat32() => Float32List.fromList(storage).buffer.asByteData();
+}

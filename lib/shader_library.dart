@@ -1,7 +1,7 @@
 import 'package:flutter_gpu/gpu.dart' as gpu;
 
 const String _kShaderBundlePath =
-    'build/shaderbundles/shader_library.shaderbundle';
+  'build/shaderbundles/shader_library.shaderbundle';
 // NOTE: If you're building a library, the path must be prefixed
 //       with a package name. For example:
 //      'packages/my_cool_renderer/build/shaderbundles/my_renderer.shaderbundle'

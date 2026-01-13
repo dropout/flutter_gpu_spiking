@@ -3,10 +3,10 @@ import 'package:flutter/scheduler.dart';
 
 import 'package:flutter_gpu/gpu.dart' as gpu;
 
-import 'shaders.dart';
+import 'shader_library.dart';
 import 'utils.dart';
 
-
+/// A painter that draws a simple triangle to the screen.
 class TrianglePainter extends CustomPainter {
 
   const TrianglePainter();
@@ -22,7 +22,7 @@ class TrianglePainter extends CustomPainter {
       sampleCount: 4,
     );
 
-    // Create the final destination (1 sample)
+    // Create the final destination texture (1 sample)
     final resolveTexture = gpu.gpuContext.createTexture(
       gpu.StorageMode.devicePrivate,
       size.width.toInt(),
@@ -45,7 +45,7 @@ class TrianglePainter extends CustomPainter {
         resolveTexture: resolveTexture,
         storeAction: gpu.StoreAction.multisampleResolve,
         loadAction: gpu.LoadAction.clear,
-        clearValue: colorToVector4(Colors.deepPurpleAccent),
+        clearValue: Colors.deepPurpleAccent.toVector4(),
       ),
     );
 
@@ -66,11 +66,13 @@ class TrianglePainter extends CustomPainter {
     final hostBuffer = gpu.gpuContext.createHostBuffer();
 
     // 0, 0 is at the center of the screen.
-    final vertices = hostBuffer.emplace(float32(<double>[
-      -0.5, -0.5, // Bottom Left
-      0.0, 0.5, // Top Center
-      0.5, -0.5, // Bottom Right
-    ]));
+    final vertices = hostBuffer.emplace(
+      <double>[
+        -0.5, -0.5, // Bottom Left
+        0.0, 0.5, // Top Center
+        0.5, -0.5, // Bottom Right
+      ].toFloat32(),
+    );
 
     // Bind the vertex data. In this case, we won't bother binding an index
     // buffer, since triangles can be drawn directly from the vertex buffer.
@@ -106,15 +108,12 @@ class TrianglePage extends StatefulWidget {
 class _TrianglePageState extends State<TrianglePage> {
 
   late final Ticker ticker;
+  Duration elapsed = Duration.zero;
 
   @override
   void initState() {
     ticker = Ticker(
-      (elapsed) {
-        setState(() {
-
-        });
-      },
+      (e) => setState(() { elapsed = e; })
     );
     ticker.start();
     super.initState();
@@ -131,6 +130,7 @@ class _TrianglePageState extends State<TrianglePage> {
 
   @override
   void dispose() {
+    ticker.stop();
     ticker.dispose();
     super.dispose();
   }

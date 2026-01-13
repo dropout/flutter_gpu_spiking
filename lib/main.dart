@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'blank.dart';
-import 'cube.dart';
 import 'triangle.dart';
+import 'quad.dart';
+import 'textured_quad.dart';
 
 void main() {
   runApp(const FlutterGpuSpikingApp());
@@ -14,7 +15,6 @@ class FlutterGpuSpikingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter GPU Test',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -32,14 +32,18 @@ class DemoPage extends StatefulWidget {
 }
 
 class _DemoPageState extends State<DemoPage> {
+
+  final List<Widget> widgets = [
+    const BlankPage(),
+    const TrianglePage(),
+    const QuadPage(),
+    const TexturedQuadPage(),
+  ];
+
   int widgetIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final widgets = [
-      const BlankPage(),
-      const TrianglePage(),
-    ];
     return Scaffold(
       body: Stack(
         children: [

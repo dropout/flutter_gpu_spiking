@@ -1,16 +1,19 @@
 # flutter_gpu_spiking
 
-A new Flutter project.
+How usable it is?
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Start right away!
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Findings
+* Dialect of GLSL
+* Shader compilation error messages are not very descriptive
+* Build asset hook problems
+  1. Change shader to invalid shader code
+  2. Run project - app crash
+  3. Change shader to valid shader code
+  4. Run project - app crash again
+  5. Use build_runner to run build hook
+  6. Run project - app works

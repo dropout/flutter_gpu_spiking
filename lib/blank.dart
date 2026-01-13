@@ -4,6 +4,7 @@ import 'package:flutter_gpu/gpu.dart' as gpu;
 
 import 'utils.dart';
 
+/// A blank painter that clears the screen to light blue.
 class BlankPainter extends CustomPainter {
 
   @override
@@ -18,7 +19,7 @@ class BlankPainter extends CustomPainter {
     final renderTarget = gpu.RenderTarget.singleColor(
       gpu.ColorAttachment(
         texture: texture,
-        clearValue: colorToVector4(Colors.lightBlue),
+        clearValue: Colors.lightBlue.toVector4(),
       )
     );
 
@@ -29,7 +30,6 @@ class BlankPainter extends CustomPainter {
 
     final image = texture.asImage();
     canvas.drawImage(image, Offset.zero, Paint());
-
   }
 
   @override
