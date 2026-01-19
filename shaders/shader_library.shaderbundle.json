@@ -7,12 +7,20 @@
     "type": "fragment",
     "file": "shaders/simple.frag"
   },
-  "UnlitTextureVertex": {
+  "TexturedVertex": {
     "type": "vertex",
-    "file": "shaders/unlit_texture.vert"
+    "file": "shaders/textured.vert"
   },
-  "UnlitTextureFragment": {
+  "TexturedFragment": {
     "type": "fragment",
-    "file": "shaders/unlit_texture.frag"
+    "file": "shaders/textured.frag"
+  },
+  "GenericVertex": {
+    "type": "vertex",
+    "file": "shaders/generic.vert"
+  },
+  "GenericFragment": {
+    "type": "fragment",
+    "file": "shaders/generic.frag"
   }
 }

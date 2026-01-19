@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gpu_spiking/cube.dart';
 
 import 'blank.dart';
 import 'triangle.dart';
@@ -38,6 +39,7 @@ class _DemoPageState extends State<DemoPage> {
     const TrianglePage(),
     const QuadPage(),
     const TexturedQuadPage(),
+    const CubePage(),
   ];
 
   int widgetIndex = 0;

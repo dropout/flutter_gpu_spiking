@@ -55,8 +55,8 @@ class TexturedQuadPainter extends CustomPainter {
     final renderPass = commandBuffer.createRenderPass(renderTarget);
 
     // Create a RenderPipeline using shaders from the asset.
-    final vertex = shaderLibrary['UnlitTextureVertex']!;
-    final fragment = shaderLibrary['UnlitTextureFragment']!;
+    final vertex = shaderLibrary['TexturedVertex']!;
+    final fragment = shaderLibrary['TexturedFragment']!;
     final pipeline = gpu.gpuContext.createRenderPipeline(vertex, fragment);
 
     // Bind the pipeline so that subsequent draw calls use it.
