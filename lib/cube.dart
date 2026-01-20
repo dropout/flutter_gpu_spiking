@@ -11,30 +11,33 @@ import 'utils.dart';
 class CubePainter extends CustomPainter {
 
   final double time;
+  final double depthClearValue;
 
   const CubePainter({
     required this.time,
+    this.depthClearValue = 1.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-
-    // Creating a multisample buffer (4 samples)
-    final msaaTexture = gpu.gpuContext.createTexture(
-      gpu.StorageMode.devicePrivate,
-      size.width.toInt(),
-      size.height.toInt(),
-      sampleCount: 4,
-    );
 
     // Create the final destination texture (1 sample)
     final resolveTexture = gpu.gpuContext.createTexture(
       gpu.StorageMode.devicePrivate,
       size.width.toInt(),
       size.height.toInt(),
-      sampleCount: 1,
       enableRenderTargetUsage: true,
       enableShaderReadUsage: true,
+      coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
+    );
+
+    // Create a depth texture for 3D rendering.
+    final gpu.Texture depthTexture = gpu.gpuContext.createTexture(
+      gpu.StorageMode.deviceTransient,
+      size.width.toInt(),
+      size.height.toInt(),
+      format: gpu.gpuContext.defaultDepthStencilFormat,
+      enableRenderTargetUsage: true,
       coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
     );
 
@@ -46,11 +49,12 @@ class CubePainter extends CustomPainter {
     // RenderPass will write to.
     final renderTarget = gpu.RenderTarget.singleColor(
       gpu.ColorAttachment(
-        texture: msaaTexture,
-        resolveTexture: resolveTexture,
-        storeAction: gpu.StoreAction.multisampleResolve,
-        loadAction: gpu.LoadAction.clear,
+        texture: resolveTexture,
         clearValue: Colors.teal.toVector4(),
+      ),
+      depthStencilAttachment: gpu.DepthStencilAttachment(
+        texture: depthTexture,
+        depthClearValue: depthClearValue,
       ),
     );
 
@@ -66,11 +70,13 @@ class CubePainter extends CustomPainter {
     // Bind the pipeline so that subsequent draw calls use it.
     renderPass.bindPipeline(pipeline);
 
+    // Enable depth testing.
+    renderPass.setDepthWriteEnable(true);
+    renderPass.setDepthCompareOperation(gpu.CompareFunction.less);
+
     // Append quick geometry and uniforms to a host buffer that will be
     // automatically uploaded to the GPU later on.
     final hostBuffer = gpu.gpuContext.createHostBuffer();
-
-    // 0, 0 is at the center of the screen.
 
     // Vertex format: X, Y, Z, U, V, R, G, B, A (9 floats per vertex)
     // Cube with different colors on each face, and since we are using
