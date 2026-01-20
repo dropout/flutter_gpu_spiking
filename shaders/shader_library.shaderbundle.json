@@ -22,5 +22,9 @@
   "GenericFragment": {
     "type": "fragment",
     "file": "shaders/generic.frag"
+  },
+  "GenericTexturedFragment": {
+    "type": "fragment",
+    "file": "shaders/generic_textured.frag"
   }
 }
