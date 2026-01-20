@@ -17,3 +17,4 @@ Start right away!
   4. Run project - app crash again
   5. Use build_runner to run build hook
   6. Run project - app works
+* It's not possible to set anisotropic filtering level on textures
