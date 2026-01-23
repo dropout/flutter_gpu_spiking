@@ -1,6 +1,10 @@
 
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 
 import 'package:flutter_gpu/gpu.dart' as gpu;
 
@@ -10,7 +14,11 @@ import 'utils.dart';
 /// A painter that draws a textured quad using a multisampled render target.
 class TexturedQuadPainter extends CustomPainter {
 
-  const TexturedQuadPainter();
+  final ByteData imageByteData;
+
+  const TexturedQuadPainter({
+    required this.imageByteData,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -84,22 +92,29 @@ class TexturedQuadPainter extends CustomPainter {
       ].toUint16()
     );
 
-    // Create a 'texture' that is 5x5 checkerboard pattern for sampling.
+    gpu.SamplerOptions samplerOptions = gpu.SamplerOptions(
+      minFilter: gpu.MinMagFilter.linear,
+      magFilter: gpu.MinMagFilter.linear,
+      mipFilter: gpu.MipFilter.linear,
+      heightAddressMode: gpu.SamplerAddressMode.clampToEdge,
+      widthAddressMode: gpu.SamplerAddressMode.clampToEdge,
+    );
+
     final sampledTexture = gpu.gpuContext.createTexture(
       gpu.StorageMode.hostVisible,
-      5,
-      5,
-      enableShaderReadUsage: true
+      1024,
+      1024,
+      format: gpu.PixelFormat.r8g8b8a8UNormInt,
+      sampleCount: 1,
+      enableShaderReadUsage: true,
     );
-    sampledTexture.overwrite(<int>[
-      0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
-      0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
-      0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
-      0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
-      0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
-    ].toUint32());
+    sampledTexture.overwrite(imageByteData);
     final textureSlot = pipeline.fragmentShader.getUniformSlot('u_texture');
-    renderPass.bindTexture(textureSlot, sampledTexture);
+    renderPass.bindTexture(
+      textureSlot,
+      sampledTexture,
+      sampler: samplerOptions
+    );
 
     // Bind the vertex data. In this case, we won't bother binding an index
     // buffer, since triangles can be drawn directly from the vertex buffer.
@@ -137,6 +152,7 @@ class _TexturedQuadPageState extends State<TexturedQuadPage> {
 
   late final Ticker ticker;
   Duration elapsed = Duration.zero;
+  ByteData? imageData;
 
   @override
   void initState() {
@@ -144,14 +160,31 @@ class _TexturedQuadPageState extends State<TexturedQuadPage> {
       (e) => setState(() { elapsed = e; })
     );
     ticker.start();
+    rootBundle.load('assets/images/uv_checker_1k.png').then((bd) async {
+      ui.decodeImageFromList(bd.buffer.asUint8List(), (img) async {
+        imageData = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+        setState(() {
+        });
+      });
+    });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (imageData == null) {
+      return const SizedBox.expand(
+        child: Center(
+          child: Text('Loading image...'),
+        ),
+      );
+    }
+
     return SizedBox.expand(
       child: CustomPaint(
-        painter: TexturedQuadPainter(),
+        painter: TexturedQuadPainter(
+          imageByteData: imageData!,
+        ),
       )
     );
   }
