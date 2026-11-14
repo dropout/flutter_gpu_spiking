@@ -18,3 +18,8 @@ Start right away!
   5. Use build_runner to run build hook
   6. Run project - app works
 * It's not possible to set anisotropic filtering level on textures
+## Executables
+Two entrypoints, selected with `-t`:
+
+* `flutter run -t lib/basic_examples.dart` - basic Flutter GPU examples (no flutter_scene)
+* `flutter run -t lib/ideas.dart` - larger experiments built on flutter_scene
