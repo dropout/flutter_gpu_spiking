@@ -3,11 +3,15 @@ import 'package:flutter_gpu_spiking/cube.dart';
 import 'package:flutter_gpu_spiking/textured_cube.dart';
 
 import 'blank.dart';
+import 'disco_floor.dart';
 import 'triangle.dart';
 import 'quad.dart';
+import 'shader_library.dart';
 import 'textured_quad.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await loadShaderLibrary();
   runApp(const FlutterGpuSpikingApp());
 }
 
@@ -42,6 +46,7 @@ class _DemoPageState extends State<DemoPage> {
     const TexturedQuadPage(),
     const CubePage(),
     const TexturedCubePage(),
+    const DiscoFloorPage(),
   ];
 
   int widgetIndex = 0;

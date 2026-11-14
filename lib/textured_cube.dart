@@ -33,7 +33,6 @@ class CubePainter extends CustomPainter {
       size.height.toInt(),
       enableRenderTargetUsage: true,
       enableShaderReadUsage: true,
-      coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
     );
 
     // Create a depth texture for 3D rendering.
@@ -43,7 +42,6 @@ class CubePainter extends CustomPainter {
       size.height.toInt(),
       format: gpu.gpuContext.defaultDepthStencilFormat,
       enableRenderTargetUsage: true,
-      coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
     );
 
     // Create the command buffer.
@@ -145,10 +143,10 @@ class CubePainter extends CustomPainter {
     );
 
     // Bind the vertex data (9 floats per vertex)
-    renderPass.bindVertexBuffer(vertices, 4);
+    renderPass.bindVertexBuffer(vertices);
 
     // Bind index data (36 indices)
-    renderPass.bindIndexBuffer(indices, gpu.IndexType.int16, 36);
+    renderPass.bindIndexBuffer(indices, gpu.IndexType.int16);
 
     gpu.SamplerOptions samplerOptions = gpu.SamplerOptions(
       minFilter: gpu.MinMagFilter.linear,
@@ -217,7 +215,7 @@ class CubePainter extends CustomPainter {
     renderPass.bindUniform(frameInfoSlot, frameInfoView);
 
     // And finally, we append a draw call.
-    renderPass.draw();
+    renderPass.drawIndexed(36);
 
     // Submit all of the previously encoded passes. Passes are encoded in the
     // same order they were created in.

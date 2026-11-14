@@ -30,7 +30,6 @@ class QuadPainter extends CustomPainter {
       sampleCount: 1,
       enableRenderTargetUsage: true,
       enableShaderReadUsage: true,
-      coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
     );
 
     // Create the command buffer.
@@ -84,13 +83,13 @@ class QuadPainter extends CustomPainter {
     );
 
     // Bind the vertex data.
-    renderPass.bindVertexBuffer(vertices, 4);
+    renderPass.bindVertexBuffer(vertices);
 
     // Bind index data since we will be reusing vertices.
-    renderPass.bindIndexBuffer(indices, gpu.IndexType.int16, 6);
+    renderPass.bindIndexBuffer(indices, gpu.IndexType.int16);
 
     // And finally, we append a draw call.
-    renderPass.draw();
+    renderPass.drawIndexed(6);
 
     // Submit all of the previously encoded passes. Passes are encoded in the
     // same order they were created in.

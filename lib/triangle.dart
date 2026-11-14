@@ -30,7 +30,6 @@ class TrianglePainter extends CustomPainter {
       sampleCount: 1,
       enableRenderTargetUsage: true,
       enableShaderReadUsage: true,
-      coordinateSystem: gpu.TextureCoordinateSystem.renderToTexture
     );
 
     // Create the command buffer.
@@ -76,10 +75,10 @@ class TrianglePainter extends CustomPainter {
 
     // Bind the vertex data. In this case, we won't bother binding an index
     // buffer, since triangles can be drawn directly from the vertex buffer.
-    renderPass.bindVertexBuffer(vertices, 3);
+    renderPass.bindVertexBuffer(vertices);
 
     // And finally, we append a draw call.
-    renderPass.draw();
+    renderPass.draw(3);
 
     // Submit all of the previously encoded passes. Passes are encoded in the
     // same order they were created in.
