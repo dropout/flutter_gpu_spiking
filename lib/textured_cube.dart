@@ -256,14 +256,12 @@ class _TexturedCubePageState extends State<TexturedCubePage> {
     );
     ticker.start();
     rootBundle.load('assets/images/uv_checker_1k.png').then((bd) async {
-
       ui.decodeImageFromList(bd.buffer.asUint8List(), (img) async {
         imageData = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
         setState(() {
         });
       });
     });
-
     super.initState();
   }
 
