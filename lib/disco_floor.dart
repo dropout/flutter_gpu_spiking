@@ -62,12 +62,21 @@ class _DiscoFloorPageState extends State<DiscoFloorPage> {
         cameraBuilder: (elapsed) {
           final angle = _seconds(elapsed) * 0.25;
           return PerspectiveCamera(
+            // position: vm.Vector3(
+            //   math.sin(angle) * 10.5,
+            //   6.0,
+            //   math.cos(angle) * 10.5,
+            // ),
             position: vm.Vector3(
-              math.sin(angle) * 10.5,
-              6.0,
-              math.cos(angle) * 10.5,
+              7.0,
+              4.0,
+              7.0,
             ),
-            target: vm.Vector3.zero(),
+            target: vm.Vector3(
+              4.0,
+              0.0,
+              4.0,
+            ),
           );
         },
       ),
@@ -94,8 +103,8 @@ class _DiscoFloor {
     scene.add(Node()..addComponent(InstancedMeshComponent(_cubes)));
   }
 
-  static const int _size = 18;
-  static const double _spacing = 0.62;
+  static const int _size = 24;
+  static const double _spacing = 0.55;
 
   final FastNoiseLite _noise = FastNoiseLite(seed: 42)
     ..noiseType = NoiseType.openSimplex2
@@ -117,9 +126,9 @@ class _DiscoFloor {
 
           // A ring that travels outwards from the center, roughened up with
           // drifting noise so it never looks perfectly regular.
-          final ring = math.sin(distance * 1.5 - t * 4.0);
-          final drift = _noise.getNoise3(x * 0.35, z * 0.35, t * 0.4);
-          final y = 0.3 * ring + 0.35 * drift;
+          final ring = math.sin(distance * 1.5 - t * 1.0);
+          final drift = _noise.getNoise3(x * 0.15, z * 0.15, t * 0.005);
+          final y = 0.3 * ring + 0.35 * drift * 0.015;
           transforms[index].setTranslationRaw(x, y, z);
 
           final glow = 0.5 + 0.5 * ring;
