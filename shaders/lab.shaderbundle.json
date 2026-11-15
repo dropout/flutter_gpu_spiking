@@ -1,0 +1,18 @@
+{
+  "LabFullscreenVertex": {
+    "type": "vertex",
+    "file": "shaders/lab/fullscreen.vert"
+  },
+  "LabPlasmaFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/plasma.frag"
+  },
+  "LabTextureWarpFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/texture_warp.frag"
+  },
+  "LabSceneToonFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/scene_toon.frag"
+  }
+}

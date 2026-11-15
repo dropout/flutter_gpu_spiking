@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Shader Lab",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/lab.dart",
+            "args": [
+                "--enable-flutter-gpu"
+            ]
+        },
+        {
             "name": "Ideas",
             "request": "launch",
             "type": "dart",

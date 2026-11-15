@@ -31,3 +31,4 @@ flutter:
   assets:
     - build/shaderbundles/
     - assets/images/uv_checker_1k.png
+    - assets/lab/textures/

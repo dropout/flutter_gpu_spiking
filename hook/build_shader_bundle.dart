@@ -86,6 +86,18 @@ Future<void> buildShaderBundle({
 
 
 
+  // Declare the manifest and every shader source as hook dependencies so the
+  // hook re-runs (and the bundle is rebuilt) when any of them change, including
+  // on hot reload.
+  buildOutput.dependencies.add(inFile);
+  final manifestJson =
+    convert.json.decode(await File(inFile.toFilePath()).readAsString())
+      as Map<String, dynamic>;
+  for (final entry in manifestJson.values) {
+    final file = (entry as Map<String, dynamic>)['file'] as String;
+    buildOutput.dependencies.add(packageRoot.resolve(file));
+  }
+
   // TODO: Use DataAsset when available, which is currently only available on flutter master channel
   // buildOutput.assets.data.add(
   //   DataAsset(

@@ -17,9 +17,35 @@ Start right away!
   4. Run project - app crash again
   5. Use build_runner to run build hook
   6. Run project - app works
+* Hot reload rebuilds and reloads shader bundles only if the build hook
+  declares the shader sources as `buildOutput.dependencies`
 * It's not possible to set anisotropic filtering level on textures
 ## Executables
 Two entrypoints, selected with `-t`:
 
 * `flutter run -t lib/basic_examples.dart` - basic Flutter GPU examples (no flutter_scene)
 * `flutter run -t lib/ideas.dart` - larger experiments built on flutter_scene
+* `flutter run -t lib/lab.dart` - shader research lab (see below)
+
+
+## Shader lab
+`flutter run -t lib/lab.dart --enable-flutter-gpu` (a "Shader Lab" launch config
+is in `.vscode/launch.json`).
+
+* Experiments live in `lib/lab/experiments.dart`. A `FragmentExperiment` draws
+  one fragment shader from `shaders/lab.shaderbundle.json` on a fullscreen quad;
+  its `params` become controls in the right-hand panel.
+* Shader uniform contract (see `shaders/lab/plasma.frag`): `Globals`
+  (time, resolution, mouse) and `Params` (`p0`..`p5`, packed in declaration
+  order; the panel shows each control's GLSL slot). Textures bind in order as
+  `u_texture0`, `u_texture1`, ...
+* `ToonSceneExperiment` (`lib/lab/scene_toon_experiment.dart`) shows the
+  flutter_scene path: a `ShaderMaterial` whose fragment shader declares the
+  engine's standard varyings itself (no includes needed) and gets time, camera
+  position and light direction from a `SceneInfo` block rewritten every frame.
+  Its output is linear HDR, so sRGB textures are linearized in the shader.
+* Drop images into `assets/lab/textures/`; they show up in the texture picker.
+* Edit a shader and hot reload (`r`). The build hook declares the shader files
+  as dependencies so the bundle is rebuilt. Compile errors print in the
+  `flutter run` console; runtime errors (missing shader, bad uniform name) show
+  in the in-app banner. The refresh button re-fetches the bundle asset.
