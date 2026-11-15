@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' as material show Material;
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 
+import 'app/color_swatch_row.dart';
 import 'disco_floor.dart' show CameraParams;
 
 /// A vibrating square membrane, clamped at its edges.
@@ -187,15 +188,28 @@ class _MembranePageState extends State<MembranePage> {
 
 /// Tweakable parameters of the experiment.
 class MembraneParams extends ChangeNotifier {
+  static const defaultCrestColor = Color.from(
+    alpha: 1,
+    red: 0,
+    green: 0.8,
+    blue: 1,
+  );
+  static const defaultTroughColor = Color.from(
+    alpha: 1,
+    red: 1,
+    green: 0.1,
+    blue: 0.5,
+  );
+
   /// Courant number: how far a wave travels per step, in grid cells. The 2D
   /// scheme is stable up to 1/√2.
-  double courant = 0.5;
+  double courant = 0.18;
 
   /// Fraction of velocity lost per step.
-  double damping = 0.0008;
+  double damping = 0.0100;
 
   /// Simulation speed relative to real time.
-  double timeScale = 1;
+  double timeScale = 0.1;
 
   /// Nodes along one edge of the membrane.
   int nodes = 48;
@@ -215,6 +229,8 @@ class MembraneParams extends ChangeNotifier {
 
   /// World units of height per unit of displacement.
   double gain = 0.8;
+  Color crestColor = defaultCrestColor;
+  Color troughColor = defaultTroughColor;
 
   static const int maxMode = 10;
   static const double maxCourant = 0.7; // just under 1/√2
@@ -225,9 +241,9 @@ class MembraneParams extends ChangeNotifier {
   }
 
   void reset() => update(() {
-    courant = 0.5;
-    damping = 0.0008;
-    timeScale = 1;
+    courant = 0.18;
+    damping = 0.0100;
+    timeScale = 0.1;
     nodes = 48;
     modeN = 2;
     modeM = 3;
@@ -237,6 +253,8 @@ class MembraneParams extends ChangeNotifier {
     driveHz = 3;
     driveAmplitude = 0.01;
     gain = 0.8;
+    crestColor = defaultCrestColor;
+    troughColor = defaultTroughColor;
   });
 }
 
@@ -300,8 +318,6 @@ class _Membrane {
 
   // Colors, linear RGBA: neutral at rest, tinted by the sign of displacement.
   static final _rest = vm.Vector4(0.05, 0.09, 0.16, 1);
-  static final _crest = vm.Vector4(0.0, 0.8, 1.0, 1);
-  static final _trough = vm.Vector4(1.0, 0.1, 0.5, 1);
 
   void _allocate(int n) {
     size = n;
@@ -456,11 +472,11 @@ class _Membrane {
           );
 
           final t = (u.abs() * 1.5).clamp(0.0, 1.0);
-          final tint = u >= 0 ? _crest : _trough;
+          final tint = u >= 0 ? params.crestColor : params.troughColor;
           color.setValues(
-            _rest.x + (tint.x - _rest.x) * t,
-            _rest.y + (tint.y - _rest.y) * t,
-            _rest.z + (tint.z - _rest.z) * t,
+            _rest.x + (tint.r - _rest.x) * t,
+            _rest.y + (tint.g - _rest.y) * t,
+            _rest.z + (tint.b - _rest.z) * t,
             1,
           );
           _cubes.setInstanceColor(k, color);
@@ -645,6 +661,21 @@ class _ControlPanel extends StatelessWidget {
                       (v) => params.update(() => params.gain = v),
                       digits: 2,
                     ),
+                    _header('Colors'),
+                    ColorSwatchRow(
+                      label: 'Crest',
+                      value: params.crestColor,
+                      swatches: _colorSwatches,
+                      onChanged: (c) =>
+                          params.update(() => params.crestColor = c),
+                    ),
+                    ColorSwatchRow(
+                      label: 'Trough',
+                      value: params.troughColor,
+                      swatches: _colorSwatches,
+                      onChanged: (c) =>
+                          params.update(() => params.troughColor = c),
+                    ),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -686,6 +717,12 @@ class _ControlPanel extends StatelessWidget {
       ],
     );
   }
+
+  static const _colorSwatches = [
+    MembraneParams.defaultCrestColor,
+    MembraneParams.defaultTroughColor,
+    ...ColorSwatchRow.defaultSwatches,
+  ];
 
   Widget _note(String text) => Align(
     alignment: Alignment.centerLeft,

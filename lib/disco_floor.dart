@@ -8,6 +8,8 @@ import 'package:flutter_scene/noise.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 
+import 'app/color_swatch_row.dart';
+
 /// A flutter_scene investigation: a procedurally animated floor of cubes.
 ///
 /// The floor is one [InstancedMesh] of 324 cubes, a single draw call, whose
@@ -439,15 +441,15 @@ class _ControlPanel extends StatelessWidget {
                       5,
                       (v) => params.update(() => params.density = v),
                     ),
-                    _colorRow(
-                      'Color A',
-                      params.colorA,
-                      (c) => params.update(() => params.colorA = c),
+                    ColorSwatchRow(
+                      label: 'Color A',
+                      value: params.colorA,
+                      onChanged: (c) => params.update(() => params.colorA = c),
                     ),
-                    _colorRow(
-                      'Color B',
-                      params.colorB,
-                      (c) => params.update(() => params.colorB = c),
+                    ColorSwatchRow(
+                      label: 'Color B',
+                      value: params.colorB,
+                      onChanged: (c) => params.update(() => params.colorB = c),
                     ),
                     _slider(
                       'Environment lighting',
@@ -525,55 +527,6 @@ class _ControlPanel extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-
-  static const _swatches = [
-    Color(0xFF1E1954),
-    Color(0xFF342B91),
-    Color(0xFF0D75F8),
-    Color(0xFFA81FE0),
-    Color(0xFFFF2BD6),
-    Color(0xFF00E5FF),
-    Color(0xFFFFB300),
-    Color(0xFF111111),
-  ];
-
-  Widget _colorRow(String label, Color value, ValueChanged<Color> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 70,
-            child: Text(label, style: const TextStyle(color: Colors.white)),
-          ),
-          Expanded(
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final c in _swatches)
-                  GestureDetector(
-                    onTap: () => onChanged(c),
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: c == value ? Colors.white : Colors.white24,
-                          width: c == value ? 2 : 1,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
