@@ -15,6 +15,10 @@
     "type": "fragment",
     "file": "shaders/lab/scene_toon.frag"
   },
+  "LabTransitionFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/transition.frag"
+  },
   "LabParchmentFragment": {
     "type": "fragment",
     "file": "shaders/lab/parchment.frag"

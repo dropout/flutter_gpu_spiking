@@ -44,6 +44,9 @@ is in `.vscode/launch.json`).
   engine's standard varyings itself (no includes needed) and gets time, camera
   position and light direction from a `SceneInfo` block rewritten every frame.
   Its output is linear HDR, so sRGB textures are linearized in the shader.
+* `Transition` sweeps from the first image to the second, top to bottom.
+  `Sweep length` sets the gradient height as a fraction of the viewport height;
+  zero gives a sharp edge. Progress can be set manually or auto-played.
 * `Parchment` is a cheap procedural paper background meant to sit behind scrolling
   content. Inputs: `scroll` (in viewport heights, i.e. scroll offset / viewport
   height) and `seed` (same seed, same paper; no time input). The mouse wheel or

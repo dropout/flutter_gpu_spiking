@@ -36,6 +36,25 @@ const List<LabExperiment> labExperiments = [
   ),
   ToonSceneExperiment(),
   FragmentExperiment(
+    name: 'Transition',
+    description:
+        'Top-to-bottom image transition with a gradient height measured in '
+        'viewport heights. Progress runs from 0 to 1; auto-play ping-pongs it.',
+    fragmentShader: 'LabTransitionFragment',
+    params: [
+      FloatParam('progress', 'Progress', min: 0, max: 1, initial: 0),
+      BoolParam('auto', 'Auto-play'),
+      FloatParam('period', 'Auto-play seconds', min: 0.2, max: 8, initial: 2),
+      TextureParam('from', 'From', initial: 'assets/lab/textures/sweet.jpg'),
+      TextureParam('to', 'To', initial: 'assets/lab/textures/green.jpeg'),
+      FloatParam('sweepLength', 'Sweep length', min: 0, max: 1, initial: 0.5),
+      FloatParam('softness', 'Smoothing', min: 0, max: 1, initial: 1),
+      FloatParam('wobble', 'Edge wobble', min: 0, max: 0.5, initial: 0.1),
+      FloatParam('wobbleScale', 'Wobble scale', min: 0.5, max: 20, initial: 4),
+      FloatParam('grain', 'Grain', min: 0, max: 0.2, initial: 0.04),
+    ],
+  ),
+  FragmentExperiment(
     name: 'Parchment',
     description:
         'Cheap procedural paper background. Scroll over the viewport to move '
