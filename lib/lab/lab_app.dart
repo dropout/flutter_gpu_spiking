@@ -9,9 +9,16 @@ import 'lab_textures.dart';
 import 'params.dart';
 
 class LabApp extends StatelessWidget {
-  const LabApp({super.key, required this.experiments});
+  const LabApp({
+    super.key,
+    required this.experiments,
+    this.initialExperiment = '',
+  });
 
   final List<LabExperiment> experiments;
+
+  /// Name of the experiment to open first, or empty for the first one.
+  final String initialExperiment;
 
   @override
   Widget build(BuildContext context) {
@@ -25,15 +32,23 @@ class LabApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: LabShell(experiments: experiments),
+      home: LabShell(
+        experiments: experiments,
+        initialExperiment: initialExperiment,
+      ),
     );
   }
 }
 
 class LabShell extends StatefulWidget {
-  const LabShell({super.key, required this.experiments});
+  const LabShell({
+    super.key,
+    required this.experiments,
+    this.initialExperiment = '',
+  });
 
   final List<LabExperiment> experiments;
+  final String initialExperiment;
 
   @override
   State<LabShell> createState() => _LabShellState();
@@ -60,6 +75,10 @@ class _LabShellState extends State<LabShell>
   @override
   void initState() {
     super.initState();
+    final start = widget.experiments.indexWhere(
+      (e) => e.name == widget.initialExperiment,
+    );
+    if (start >= 0) _selected = start;
     _ticker = createTicker((elapsed) {
       if (!_paused) _time.value += (elapsed - _lastTick).inMicroseconds / 1e6;
       _lastTick = elapsed;

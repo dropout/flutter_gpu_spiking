@@ -44,6 +44,13 @@ is in `.vscode/launch.json`).
   engine's standard varyings itself (no includes needed) and gets time, camera
   position and light direction from a `SceneInfo` block rewritten every frame.
   Its output is linear HDR, so sRGB textures are linearized in the shader.
+* `Parchment` is a cheap procedural paper background meant to sit behind scrolling
+  content. Inputs: `scroll` (in viewport heights, i.e. scroll offset / viewport
+  height) and `seed` (same seed, same paper; no time input). The mouse wheel or
+  trackpad over the viewport drives `scroll`. `FragmentExperiment.renderScale`
+  renders at a fraction of the resolution (0.5 for Parchment) to save fill
+  rate. Start the lab on an experiment with
+  `--dart-define=LAB_EXPERIMENT=Parchment`.
 * Drop images into `assets/lab/textures/`; they show up in the texture picker.
 * Edit a shader and hot reload (`r`). The build hook declares the shader files
   as dependencies so the bundle is rebuilt. Compile errors print in the

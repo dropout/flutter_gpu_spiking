@@ -35,4 +35,41 @@ const List<LabExperiment> labExperiments = [
     ],
   ),
   ToonSceneExperiment(),
+  FragmentExperiment(
+    name: 'Parchment',
+    description:
+        'Cheap procedural paper background. Scroll over the viewport to move '
+        'it; the seed reproduces the same paper. Scroll is in viewport '
+        'heights (scroll offset / viewport height).',
+    fragmentShader: 'LabParchmentFragment',
+    scrollParam: 'scroll',
+    renderScale: 0.5,
+    params: [
+      FloatParam('scroll', 'Scroll (screens)', min: 0, max: 40, initial: 0),
+      FloatParam('parallax', 'Parallax', min: 0, max: 1, initial: 0.4),
+      FloatParam(
+        'seed',
+        'Seed',
+        min: 0,
+        max: 9999,
+        initial: 42,
+        decimals: 0,
+        divisions: 9999,
+      ),
+      FloatParam('aged', 'Age', min: 0, max: 1.5, initial: 0.8),
+      FloatParam('mottle', 'Mottle scale', min: 0.5, max: 12, initial: 3),
+      FloatParam('grain', 'Grain', min: 0, max: 0.5, initial: 0.12),
+      FloatParam('vignette', 'Edge darkening', min: 0, max: 1, initial: 0.4),
+      FloatParam(
+        'grainScale',
+        'Grain frequency',
+        min: 50,
+        max: 800,
+        initial: 300,
+        decimals: 0,
+      ),
+      ColorParam('paper', 'Paper', initial: Color(0xFFEBD9A9)),
+      ColorParam('dark', 'Aged tone', initial: Color(0xFF8A5A2B)),
+    ],
+  ),
 ];

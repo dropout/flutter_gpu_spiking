@@ -14,5 +14,9 @@
   "LabSceneToonFragment": {
     "type": "fragment",
     "file": "shaders/lab/scene_toon.frag"
+  },
+  "LabParchmentFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/parchment.frag"
   }
 }

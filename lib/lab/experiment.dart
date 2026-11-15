@@ -53,6 +53,8 @@ class FragmentExperiment extends LabExperiment {
     required this.description,
     required this.fragmentShader,
     required this.params,
+    this.scrollParam,
+    this.renderScale = 1.0,
   });
 
   @override
@@ -65,11 +67,25 @@ class FragmentExperiment extends LabExperiment {
   /// Name of the fragment shader in `shaders/lab.shaderbundle.json`.
   final String fragmentShader;
 
+  /// Id of a [FloatParam] driven by the mouse wheel / trackpad scroll over the
+  /// viewport, like scrolling a page would drive it in an app.
+  final String? scrollParam;
+
+  /// How many param units one logical scroll pixel adds.
+  double get scrollUnitsPerPixel => 0.001;
+
+  /// Fraction of the viewport's pixel resolution to render at (0..1]. Lower is
+  /// cheaper on mobile; the result is upscaled with bilinear filtering.
+  final double renderScale;
+
   @override
   Widget buildView(BuildContext context, LabContext lab) =>
       FullscreenShaderView(
         key: ValueKey(name),
         fragmentShader: fragmentShader,
         lab: lab,
+        scrollParam: scrollParam,
+        scrollUnitsPerPixel: scrollUnitsPerPixel,
+        renderScale: renderScale,
       );
 }

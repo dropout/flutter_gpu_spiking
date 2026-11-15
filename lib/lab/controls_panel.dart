@@ -45,11 +45,12 @@ class ControlsPanel extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            header('$glsl  ${v.toStringAsFixed(2)}'),
+            header('$glsl  ${v.toStringAsFixed(param.decimals)}'),
             Slider(
               value: v.clamp(param.min, param.max),
               min: param.min,
               max: param.max,
+              divisions: param.divisions,
               onChanged: (x) => values.set(param.id, x),
             ),
           ],

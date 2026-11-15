@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gpu/gpu.dart' as gpu;
 import 'package:vector_math/vector_math.dart' show Vector4;
@@ -7,6 +8,7 @@ import 'package:vector_math/vector_math.dart' show Vector4;
 import 'experiment.dart';
 import 'lab_shaders.dart';
 import 'lab_textures.dart';
+import 'params.dart';
 
 /// Draws a lab fragment shader on a fullscreen quad every frame.
 class FullscreenShaderView extends StatefulWidget {
@@ -14,10 +16,16 @@ class FullscreenShaderView extends StatefulWidget {
     super.key,
     required this.fragmentShader,
     required this.lab,
+    this.scrollParam,
+    this.scrollUnitsPerPixel = 0.001,
+    this.renderScale = 1.0,
   });
 
   final String fragmentShader;
   final LabContext lab;
+  final String? scrollParam;
+  final double scrollUnitsPerPixel;
+  final double renderScale;
 
   @override
   State<FullscreenShaderView> createState() => _FullscreenShaderViewState();
@@ -60,19 +68,51 @@ class _FullscreenShaderViewState extends State<FullscreenShaderView> {
   Widget build(BuildContext context) {
     final lab = widget.lab;
     final dpr = MediaQuery.devicePixelRatioOf(context);
-    return RepaintBoundary(
-      child: SizedBox.expand(
-        child: CustomPaint(
-          painter: _FullscreenPainter(
-            fragmentShader: widget.fragmentShader,
-            lab: lab,
-            textures: _textures,
-            devicePixelRatio: dpr,
+    return Listener(
+      onPointerSignal: _onPointerSignal,
+      onPointerPanZoomUpdate: _onPanZoomUpdate,
+      child: RepaintBoundary(
+        child: SizedBox.expand(
+          child: CustomPaint(
+            painter: _FullscreenPainter(
+              fragmentShader: widget.fragmentShader,
+              lab: lab,
+              textures: _textures,
+              devicePixelRatio: dpr,
+              renderScale: widget.renderScale,
+            ),
           ),
         ),
       ),
     );
   }
+
+  /// Adds [pixels] of scroll to the experiment's scroll param, if it has one.
+  void _scrollBy(double pixels) {
+    final id = widget.scrollParam;
+    if (id == null) return;
+    final values = widget.lab.values;
+    final param = values.params.whereType<FloatParam>().firstWhere(
+      (p) => p.id == id,
+    );
+    values.set(
+      id,
+      (values.getFloat(id) + pixels * widget.scrollUnitsPerPixel).clamp(
+        param.min,
+        param.max,
+      ),
+    );
+  }
+
+  // Mouse wheels send scroll signals; the delta is positive when scrolling
+  // down, like a page's scroll offset.
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) _scrollBy(event.scrollDelta.dy);
+  }
+
+  // Trackpads send pan/zoom updates; fingers moving up scroll down.
+  void _onPanZoomUpdate(PointerPanZoomUpdateEvent event) =>
+      _scrollBy(-event.panDelta.dy);
 }
 
 class _FullscreenPainter extends CustomPainter {
@@ -81,12 +121,14 @@ class _FullscreenPainter extends CustomPainter {
     required this.lab,
     required this.textures,
     required this.devicePixelRatio,
+    required this.renderScale,
   }) : super(repaint: Listenable.merge([lab.time, lab.mouse, lab.values]));
 
   final String fragmentShader;
   final LabContext lab;
   final Map<String, gpu.Texture> textures;
   final double devicePixelRatio;
+  final double renderScale;
 
   String get _errorKey => 'draw:$fragmentShader';
 
@@ -112,8 +154,9 @@ class _FullscreenPainter extends CustomPainter {
       textureBindings.add(texture);
     }
 
-    final width = (size.width * devicePixelRatio).round().clamp(1, 8192);
-    final height = (size.height * devicePixelRatio).round().clamp(1, 8192);
+    final scale = devicePixelRatio * renderScale;
+    final width = (size.width * scale).round().clamp(1, 8192);
+    final height = (size.height * scale).round().clamp(1, 8192);
 
     final target = gpu.gpuContext.createTexture(
       gpu.StorageMode.devicePrivate,
@@ -189,8 +232,12 @@ class _FullscreenPainter extends CustomPainter {
     commandBuffer.submit();
 
     canvas.save();
-    canvas.scale(1 / devicePixelRatio);
-    canvas.drawImage(target.asImage(), Offset.zero, Paint());
+    canvas.scale(size.width / width, size.height / height);
+    canvas.drawImage(
+      target.asImage(),
+      Offset.zero,
+      Paint()..filterQuality = FilterQuality.low,
+    );
     canvas.restore();
   }
 

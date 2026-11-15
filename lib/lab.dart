@@ -20,5 +20,12 @@ Future<void> main() async {
     );
     return;
   }
-  runApp(const LabApp(experiments: labExperiments));
+  // Optionally start on a given experiment:
+  //   flutter run -t lib/lab.dart --dart-define=LAB_EXPERIMENT=Parchment
+  runApp(
+    const LabApp(
+      experiments: labExperiments,
+      initialExperiment: String.fromEnvironment('LAB_EXPERIMENT'),
+    ),
+  );
 }

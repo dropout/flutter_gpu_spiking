@@ -22,11 +22,19 @@ class FloatParam extends LabParam {
     required this.min,
     required this.max,
     required this.initial,
+    this.decimals = 2,
+    this.divisions,
   });
 
   final double min;
   final double max;
   final double initial;
+
+  /// Digits shown after the decimal point in the panel.
+  final int decimals;
+
+  /// Number of slider steps, or null for a continuous slider.
+  final int? divisions;
 }
 
 /// A color. Packed as a whole vec4 (r, g, b, a).
