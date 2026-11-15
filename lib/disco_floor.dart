@@ -157,10 +157,10 @@ class _DiscoFloorPageState extends State<DiscoFloorPage> {
 
 /// Tweakable parameters of the experiment.
 class DiscoParams extends ChangeNotifier {
-  double waveSpeed = 1.0;
+  double waveSpeed = 0.5;
   double waveLength = 2 * math.pi / 1.5;
-  double waveAmplitude = 0.1;
-  double noiseAmplitude = 0.0125;
+  double waveAmplitude = 0.2;
+  double noiseAmplitude = 0.2;
   double noiseDrift = 0.005;
 
   /// Cubes per world unit along each axis. The floor's area is fixed, so this
@@ -176,7 +176,8 @@ class DiscoParams extends ChangeNotifier {
 
   void reset() => update(() {
     waveSpeed = 1.0;
-    waveLength = 2 * math.pi / 1.5;
+    // waveLength = 2 * math.pi / 1.5;
+    waveLength = 5.5;
     waveAmplitude = 0.1;
     noiseAmplitude = 0.0125;
     noiseDrift = 0.005;
@@ -206,7 +207,7 @@ class CameraPreset {
 /// An orbit camera around the middle of the floor.
 class CameraParams extends ChangeNotifier {
   static const presets = [
-    CameraPreset('Default', azimuth: 45, elevation: 43, distance: 5.8, fov: 45),
+    CameraPreset('Default', azimuth: 45, elevation: 35, distance: 12.873, fov: 20),
     CameraPreset(
       'Isometric',
       azimuth: 45,
@@ -613,7 +614,8 @@ class _DiscoFloor {
   /// The floor covers a fixed square area; density only changes how many cubes
   /// tile it. The defaults reproduce the original 18 x 18 grid at 0.58 pitch.
   static const double _side = 18 * 0.58;
-  static const double _defaultDensity = 18 / _side;
+  // static const double _defaultDensity = 18 / _side;
+  static const double _defaultDensity = 2.5;
   static const double _referencePitch = 0.58;
 
   /// Cubes along one edge of the floor.
