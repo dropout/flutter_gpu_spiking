@@ -22,29 +22,4 @@ void main() {
     expect(material.metallicFactor, 0.1);
     expect(material.roughnessFactor, 0.35);
   });
-
-  test('reset restores the current material and notifies listeners', () {
-    final params = DiscoParams();
-    addTearDown(params.dispose);
-    params.material = DiscoMaterial.glass;
-    var notifications = 0;
-    params.addListener(() => notifications++);
-
-    params.reset();
-
-    expect(params.material, DiscoMaterial.current);
-    expect(notifications, 1);
-  });
-
-  test('environment lighting changes notify listeners and reset', () {
-    final params = DiscoParams();
-    addTearDown(params.dispose);
-    final values = <double>[];
-    params.addListener(() => values.add(params.environmentIntensity));
-
-    params.update(() => params.environmentIntensity = 1.5);
-    params.reset();
-
-    expect(values, [1.5, 0.25]);
-  });
 }

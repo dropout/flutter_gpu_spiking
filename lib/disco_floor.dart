@@ -1,167 +1,60 @@
 import 'dart:math' as math;
 
-import 'package:flutter/gestures.dart' show PointerScrollEvent;
-
-import 'package:flutter/material.dart' hide Material;
-import 'package:flutter/material.dart' as material show Material;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_scene/noise.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' as vm;
 
-import 'app/color_swatch_row.dart';
+import 'app/controls.dart';
+import 'app/idea_view.dart';
+import 'app/orbit_camera.dart';
+import 'app/scene_math.dart';
 
 /// A flutter_scene investigation: a procedurally animated floor of cubes.
 ///
-/// The floor is one [InstancedMesh] of 324 cubes, a single draw call, whose
+/// The floor is one [InstancedMesh] of cubes, a single draw call, whose
 /// per-instance transforms and colors are rewritten every frame. There are no
 /// model or texture assets.
-class DiscoFloorPage extends StatefulWidget {
+class DiscoFloorPage extends StatelessWidget {
   const DiscoFloorPage({super.key});
 
   @override
-  State<DiscoFloorPage> createState() => _DiscoFloorPageState();
-}
-
-class _DiscoFloorPageState extends State<DiscoFloorPage> {
-  final Scene scene = Scene();
-  final DiscoParams params = DiscoParams();
-  final CameraParams camera = CameraParams();
-  double _lastScale = 1;
-  final ValueNotifier<DiscoStats> stats = ValueNotifier(const DiscoStats());
-  _DiscoFloor? floor;
-  bool _panelOpen = false;
-
-  Duration _lastTick = Duration.zero;
-  Duration _lastStatsUpdate = Duration.zero;
-  int _framesSinceStats = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _syncEnvironmentLighting();
-    params.addListener(_syncEnvironmentLighting);
-    // Geometry and materials touch the engine's shader bundle, so they can
-    // only be created once the static resources are loaded.
-    Scene.initializeStaticResources().then((_) {
-      if (!mounted) return;
-      setState(() => floor = _DiscoFloor(scene, params));
-    });
-  }
-
-  @override
-  void dispose() {
-    params.removeListener(_syncEnvironmentLighting);
-    params.dispose();
-    camera.dispose();
-    stats.dispose();
-    scene.dispose();
-    super.dispose();
-  }
-
-  void _syncEnvironmentLighting() {
-    scene.environmentIntensity = params.environmentIntensity;
-  }
-
-  void _onTick(_DiscoFloor floor, Duration elapsed) {
-    final dt = _seconds(elapsed - _lastTick);
-    _lastTick = elapsed;
-    floor.update(dt);
-
-    _framesSinceStats++;
-    final window = _seconds(elapsed - _lastStatsUpdate);
-    if (window >= 0.25) {
-      stats.value = DiscoStats(
-        fps: _framesSinceStats / window,
-        frameMs: window * 1000 / _framesSinceStats,
-        phase: floor.phase,
-        cubes: floor.count,
-        minHeight: floor.minHeight,
-        maxHeight: floor.maxHeight,
-      );
-      _lastStatsUpdate = elapsed;
-      _framesSinceStats = 0;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final floor = this.floor;
-    if (floor == null) {
-      return const SizedBox.expand(
-        child: Center(child: Text('Loading scene...')),
-      );
-    }
-
-    // The scene has no skybox, so it clears to transparent and this gradient
-    // shows through as the background.
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          radius: 1.1,
-          colors: [Color(0xFF2B0B4A), Color(0xFF05010D)],
-        ),
+  Widget build(BuildContext context) => IdeaView(
+    create: (scene, _) => _DiscoFloor(scene),
+    camera: const CameraPose(azimuth: 45, elevation: 43, distance: 5.8),
+    cameraPresets: const [
+      CameraPose(
+        name: 'Default',
+        azimuth: 45,
+        elevation: 35,
+        distance: 12.873,
+        fov: 20,
       ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Drag orbits, pinch or scroll zooms.
-          Listener(
-            onPointerSignal: (event) {
-              if (event is PointerScrollEvent) {
-                camera.zoomBy(math.exp(event.scrollDelta.dy * 0.001));
-              }
-            },
-            child: GestureDetector(
-              onScaleStart: (_) => _lastScale = 1,
-              onScaleUpdate: (details) {
-                camera.orbitBy(details.focalPointDelta);
-                if (details.pointerCount > 1) {
-                  camera.zoomBy(_lastScale / details.scale);
-                  _lastScale = details.scale;
-                }
-              },
-              child: SceneView(
-                scene,
-                onTick: (elapsed, _) => _onTick(floor, elapsed),
-                cameraBuilder: (elapsed) => camera.build(),
-              ),
-            ),
-          ),
-          // Flutter's Material is hidden by the scene import, so reach the
-          // widget through a prefix. It gives the sliders something to draw on.
-          material.Material(
-            type: MaterialType.transparency,
-            child: SafeArea(
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: _ControlPanel(
-                      params: params,
-                      camera: camera,
-                      open: _panelOpen,
-                      onToggle: () => setState(() => _panelOpen = !_panelOpen),
-                    ),
-                  ),
-                  if (!_panelOpen)
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: _StatsOverlay(
-                        params: params,
-                        camera: camera,
-                        stats: stats,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      CameraPose(
+        name: 'Isometric',
+        azimuth: 45,
+        elevation: 35,
+        distance: 16,
+        fov: 20,
       ),
-    );
-  }
+      CameraPose(name: 'Top-down', azimuth: 45, elevation: 89, distance: 14),
+      CameraPose(
+        name: 'Low angle',
+        azimuth: 30,
+        elevation: 12,
+        distance: 9,
+        fov: 50,
+      ),
+      CameraPose(
+        name: 'Club',
+        azimuth: 200,
+        elevation: 20,
+        distance: 6,
+        fov: 75,
+      ),
+    ],
+    background: (const Color(0xFF2B0B4A), const Color(0xFF05010D)),
+  );
 }
 
 enum DiscoMaterial {
@@ -208,464 +101,87 @@ enum DiscoMaterial {
   }
 }
 
-/// Tweakable parameters of the experiment.
-class DiscoParams extends ChangeNotifier {
-  static const double defaultEnvironmentIntensity = 0.25;
+class _DiscoFloor extends Idea {
+  _DiscoFloor(this.scene) {
+    // An InstancedMesh rides on a component rather than on Node(mesh:).
+    scene.add(Node()..addComponent(InstancedMeshComponent(_cubes)));
+  }
 
-  double waveSpeed = 0.5;
-  double waveLength = 2 * math.pi / 1.5;
-  double waveAmplitude = 0.2;
-  double noiseAmplitude = 0.2;
-  double noiseDrift = 0.005;
+  final Scene scene;
+
+  /// The floor covers a fixed square area; density only changes how many cubes
+  /// tile it. The cubes keep the fill ratio of the original 0.58 pitch.
+  static const double _side = 18 * 0.58;
+  static const double _referencePitch = 0.58;
+
+  final waveSpeed = FloatKnob('Wave speed', 0.5, min: 0, max: 5);
+  final waveLength = FloatKnob(
+    'Wavelength',
+    2 * math.pi / 1.5,
+    min: 0.5,
+    max: 10,
+  );
+  final waveAmplitude = FloatKnob('Wave amplitude', 0.2, min: 0, max: 0.5);
+  final noiseAmplitude = FloatKnob('Noise amplitude', 0.2, min: 0, max: 0.5);
+  final noiseDrift = FloatKnob('Noise drift', 0.005, min: 0, max: 1);
 
   /// Cubes per world unit along each axis. The floor's area is fixed, so this
   /// changes how many cubes tile it, and the cubes shrink or grow to fit.
-  double density = _DiscoFloor._defaultDensity;
-  Color colorA = const Color(0xFF1E1954);
-  Color colorB = const Color(0xFF342B91);
-  DiscoMaterial material = DiscoMaterial.current;
-  double environmentIntensity = defaultEnvironmentIntensity;
+  final density = FloatKnob('Density (cubes/unit)', 2.5, min: 0.5, max: 5);
+  final colorA = ColorKnob('Color A', const Color(0xFF1E1954));
+  final colorB = ColorKnob('Color B', const Color(0xFF342B91));
+  final environment = FloatKnob('Environment lighting', 0.25, min: 0, max: 2);
+  final material = ChoiceKnob(
+    'Material',
+    DiscoMaterial.current,
+    options: DiscoMaterial.values,
+    name: (m) => m.label,
+  );
 
-  void update(void Function() change) {
-    change();
-    notifyListeners();
-  }
-
-  void reset() => update(() {
-    waveSpeed = 1.0;
-    // waveLength = 2 * math.pi / 1.5;
-    waveLength = 5.5;
-    waveAmplitude = 0.1;
-    noiseAmplitude = 0.0125;
-    noiseDrift = 0.005;
-    density = _DiscoFloor._defaultDensity;
-    colorA = const Color(0xFF1E1954);
-    colorB = const Color(0xFF342B91);
-    material = DiscoMaterial.current;
-    environmentIntensity = defaultEnvironmentIntensity;
-  });
-}
-
-/// A named camera placement.
-class CameraPreset {
-  const CameraPreset(
-    this.name, {
-    required this.azimuth,
-    required this.elevation,
-    required this.distance,
-    required this.fov,
-  });
-
-  final String name;
-  final double azimuth; // degrees around the Y axis
-  final double elevation; // degrees above the floor plane
-  final double distance;
-  final double fov; // vertical, degrees
-}
-
-/// An orbit camera around the middle of the floor.
-class CameraParams extends ChangeNotifier {
-  static const presets = [
-    CameraPreset('Default', azimuth: 45, elevation: 35, distance: 12.873, fov: 20),
-    CameraPreset(
-      'Isometric',
-      azimuth: 45,
-      elevation: 35,
-      distance: 16,
-      fov: 20,
-    ),
-    CameraPreset('Top-down', azimuth: 45, elevation: 89, distance: 14, fov: 45),
-    CameraPreset('Low angle', azimuth: 30, elevation: 12, distance: 9, fov: 50),
-    CameraPreset('Club', azimuth: 200, elevation: 20, distance: 6, fov: 75),
+  @override
+  late final List<Control> controls = [
+    Section('Experiment'),
+    waveSpeed,
+    waveLength,
+    waveAmplitude,
+    noiseAmplitude,
+    noiseDrift,
+    density,
+    colorA,
+    colorB,
+    environment,
+    Section('Material'),
+    material,
   ];
 
-  static const double minDistance = 1.5;
-  static const double maxDistance = 30;
-  // Stop short of straight up or down, where the up vector degenerates.
-  static const double minElevation = 2;
-  static const double maxElevation = 89;
-
-  double azimuth = 45;
-  double elevation = 43;
-  double distance = 5.8;
-  double fov = 45;
-
-  void apply(CameraPreset p) => set(
-    azimuth: p.azimuth,
-    elevation: p.elevation,
-    distance: p.distance,
-    fov: p.fov,
-  );
-
-  void set({
-    double? azimuth,
-    double? elevation,
-    double? distance,
-    double? fov,
-  }) {
-    if (azimuth != null) this.azimuth = azimuth % 360;
-    if (elevation != null) {
-      this.elevation = elevation.clamp(minElevation, maxElevation);
-    }
-    if (distance != null) {
-      this.distance = distance.clamp(minDistance, maxDistance);
-    }
-    if (fov != null) this.fov = fov.clamp(10, 120);
-    notifyListeners();
-  }
-
-  /// Drag [delta] in logical pixels: right turns the floor, down tilts up.
-  void orbitBy(Offset delta) => set(
-    azimuth: azimuth - delta.dx * 0.4,
-    elevation: elevation + delta.dy * 0.4,
-  );
-
-  void zoomBy(double factor) => set(distance: distance * factor);
-
-  PerspectiveCamera build() {
-    final az = azimuth * math.pi / 180;
-    final el = elevation * math.pi / 180;
-    return PerspectiveCamera(
-      fovRadiansY: fov * math.pi / 180,
-      position: vm.Vector3(
-        distance * math.cos(el) * math.sin(az),
-        distance * math.sin(el),
-        distance * math.cos(el) * math.cos(az),
-      ),
-      target: vm.Vector3.zero(),
-    );
-  }
-}
-
-/// Values sampled a few times a second for the bottom-left overlay.
-class DiscoStats {
-  const DiscoStats({
-    this.fps = 0,
-    this.frameMs = 0,
-    this.phase = 0,
-    this.cubes = 0,
-    this.minHeight = 0,
-    this.maxHeight = 0,
-  });
-
-  final double fps;
-  final double frameMs;
-  final double phase;
-  final int cubes;
-  final double minHeight;
-  final double maxHeight;
-}
-
-class _ControlPanel extends StatelessWidget {
-  const _ControlPanel({
-    required this.params,
-    required this.camera,
-    required this.open,
-    required this.onToggle,
-  });
-
-  final DiscoParams params;
-  final CameraParams camera;
-  final bool open;
-  final VoidCallback onToggle;
-
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton.filled(
-          tooltip: open ? 'Hide controls' : 'Show controls',
-          onPressed: onToggle,
-          icon: Icon(open ? Icons.close : Icons.tune),
-        ),
-        if (open) ...[
-          const SizedBox(height: 8),
-          Container(
-            width: 280,
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height - 120,
-            ),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.65),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListenableBuilder(
-              listenable: Listenable.merge([params, camera]),
-              builder: (context, _) => SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _header('Experiment'),
-                    _slider(
-                      'Wave speed',
-                      params.waveSpeed,
-                      0,
-                      5,
-                      (v) => params.update(() => params.waveSpeed = v),
-                    ),
-                    _slider(
-                      'Wavelength',
-                      params.waveLength,
-                      0.5,
-                      10,
-                      (v) => params.update(() => params.waveLength = v),
-                    ),
-                    _slider(
-                      'Wave amplitude',
-                      params.waveAmplitude,
-                      0,
-                      0.5,
-                      (v) => params.update(() => params.waveAmplitude = v),
-                    ),
-                    _slider(
-                      'Noise amplitude',
-                      params.noiseAmplitude,
-                      0,
-                      0.5,
-                      (v) => params.update(() => params.noiseAmplitude = v),
-                    ),
-                    _slider(
-                      'Noise drift',
-                      params.noiseDrift,
-                      0,
-                      1,
-                      (v) => params.update(() => params.noiseDrift = v),
-                    ),
-                    _slider(
-                      'Density (cubes/unit)',
-                      params.density,
-                      0.5,
-                      5,
-                      (v) => params.update(() => params.density = v),
-                    ),
-                    ColorSwatchRow(
-                      label: 'Color A',
-                      value: params.colorA,
-                      onChanged: (c) => params.update(() => params.colorA = c),
-                    ),
-                    ColorSwatchRow(
-                      label: 'Color B',
-                      value: params.colorB,
-                      onChanged: (c) => params.update(() => params.colorB = c),
-                    ),
-                    _slider(
-                      'Environment lighting',
-                      params.environmentIntensity,
-                      0,
-                      2,
-                      (v) =>
-                          params.update(() => params.environmentIntensity = v),
-                    ),
-                    _header('Material'),
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        for (final preset in DiscoMaterial.values)
-                          ChoiceChip(
-                            label: Text(preset.label),
-                            selected: params.material == preset,
-                            visualDensity: VisualDensity.compact,
-                            onSelected: (_) =>
-                                params.update(() => params.material = preset),
-                          ),
-                      ],
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: params.reset,
-                        child: const Text('Reset'),
-                      ),
-                    ),
-                    _header('Camera'),
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        for (final p in CameraParams.presets)
-                          ActionChip(
-                            label: Text(p.name),
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => camera.apply(p),
-                          ),
-                      ],
-                    ),
-                    _slider(
-                      'Azimuth',
-                      camera.azimuth,
-                      0,
-                      360,
-                      (v) => camera.set(azimuth: v),
-                    ),
-                    _slider(
-                      'Elevation',
-                      camera.elevation,
-                      CameraParams.minElevation,
-                      CameraParams.maxElevation,
-                      (v) => camera.set(elevation: v),
-                    ),
-                    _slider(
-                      'Distance',
-                      camera.distance,
-                      CameraParams.minDistance,
-                      CameraParams.maxDistance,
-                      (v) => camera.set(distance: v),
-                    ),
-                    _slider(
-                      'Field of view',
-                      camera.fov,
-                      10,
-                      120,
-                      (v) => camera.set(fov: v),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _header(String text) => Align(
-    alignment: Alignment.centerLeft,
-    child: Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 2),
-      child: Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 11,
-          letterSpacing: 1.2,
-        ),
-      ),
-    ),
-  );
-
-  Widget _slider(
-    String label,
-    double value,
-    double min,
-    double max,
-    ValueChanged<double> onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            '$label: ${value.toStringAsFixed(3)}',
-            style: const TextStyle(color: Colors.white, fontSize: 12),
-          ),
-        ),
-        Slider(
-          value: value.clamp(min, max),
-          min: min,
-          max: max,
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-}
-
-class _StatsOverlay extends StatelessWidget {
-  const _StatsOverlay({
-    required this.params,
-    required this.camera,
-    required this.stats,
-  });
-
-  final DiscoParams params;
-  final CameraParams camera;
-  final ValueNotifier<DiscoStats> stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListenableBuilder(
-          listenable: Listenable.merge([stats, params, camera]),
-          builder: (context, _) {
-            final s = stats.value;
-            final lines = [
-              'FPS        ${s.fps.toStringAsFixed(1)}',
-              'Frame      ${s.frameMs.toStringAsFixed(2)} ms',
-              'Cubes      ${s.cubes}',
-              'Wave phase ${s.phase.toStringAsFixed(2)}',
-              'Height     ${s.minHeight.toStringAsFixed(3)} .. '
-                  '${s.maxHeight.toStringAsFixed(3)}',
-              'Speed      ${params.waveSpeed.toStringAsFixed(2)}',
-              'Camera     az ${camera.azimuth.toStringAsFixed(0)}° '
-                  'el ${camera.elevation.toStringAsFixed(0)}°',
-              'Cam dist   ${camera.distance.toStringAsFixed(1)}  '
-                  'fov ${camera.fov.toStringAsFixed(0)}°',
-            ];
-            return Text(
-              lines.join('\n'),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontFamily: 'Menlo',
-                fontFamilyFallback: ['Courier', 'monospace'],
-                height: 1.3,
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-double _seconds(Duration d) => d.inMicroseconds / 1e6;
-
-/// Owns the cubes and advances them each frame.
-class _DiscoFloor {
-  _DiscoFloor(Scene scene, this.params) {
-    params.material.applyTo(_material);
-    _appliedMaterial = params.material;
-    _cubes = InstancedMesh(
-      geometry: CuboidGeometry(vm.Vector3(0.56, 0.6, 0.56)),
-      material: _material,
-    );
-    _resize(_gridSize);
-    // An InstancedMesh rides on a component rather than on Node(mesh:).
-    scene.add(Node()..addComponent(InstancedMeshComponent(_cubes)));
-
-  }
-
-  /// The floor covers a fixed square area; density only changes how many cubes
-  /// tile it. The defaults reproduce the original 18 x 18 grid at 0.58 pitch.
-  static const double _side = 18 * 0.58;
-  // static const double _defaultDensity = 18 / _side;
-  static const double _defaultDensity = 2.5;
-  static const double _referencePitch = 0.58;
-
-  /// Cubes along one edge of the floor.
-  int _size = 18;
-  int get count => _size * _size;
-
-  final DiscoParams params;
+  Map<String, String> get stats => {
+    'Cubes': '${_size * _size}',
+    'Wave phase': _phase.toStringAsFixed(2),
+    'Height':
+        '${_minHeight.toStringAsFixed(3)} .. ${_maxHeight.toStringAsFixed(3)}',
+  };
 
   final FastNoiseLite _noise = FastNoiseLite(seed: 42)
     ..noiseType = NoiseType.openSimplex2
     ..frequency = 1.0;
 
-  late final InstancedMesh _cubes;
   final PhysicallyBasedMaterial _material = PhysicallyBasedMaterial();
-  late DiscoMaterial _appliedMaterial;
+  late final InstancedMesh _cubes = InstancedMesh(
+    geometry: CuboidGeometry(vm.Vector3(0.56, 0.6, 0.56)),
+    material: _material,
+  );
+  DiscoMaterial? _appliedMaterial;
 
-  int get _gridSize => (params.density * _side).round().clamp(2, 200);
+  /// Cubes along one edge of the floor.
+  int _size = 0;
+
+  /// Wave phase and noise time are accumulated, rather than derived from the
+  /// elapsed time, so changing a speed slider never makes the floor jump.
+  double _phase = 0;
+  double _noiseTime = 0;
+  double _minHeight = 0;
+  double _maxHeight = 0;
 
   void _resize(int size) {
     _size = size;
@@ -676,22 +192,19 @@ class _DiscoFloor {
     }
   }
 
-  /// Wave phase and noise time are accumulated, rather than derived from the
-  /// elapsed time, so changing a speed slider never makes the floor jump.
-  double phase = 0;
-  double _noiseTime = 0;
-  double minHeight = 0;
-  double maxHeight = 0;
-
+  @override
   void update(double dt) {
-    phase += dt * params.waveSpeed;
-    _noiseTime += dt * params.noiseDrift;
+    _phase += dt * waveSpeed.value;
+    _noiseTime += dt * noiseDrift.value;
+    scene.environmentIntensity = environment.value;
 
-    if (_appliedMaterial != params.material) {
-      params.material.applyTo(_material);
-      _appliedMaterial = params.material;
+    if (_appliedMaterial != material.value) {
+      material.value.applyTo(_material);
+      _appliedMaterial = material.value;
     }
-    if (_gridSize != _size) _resize(_gridSize);
+    final gridSize = (density.value * _side).round().clamp(2, 200);
+    if (gridSize != _size) _resize(gridSize);
+
     final half = (_size - 1) / 2;
     final spacing = _side / _size;
     // Cubes keep the same fill ratio of their cell as the original layout.
@@ -713,60 +226,29 @@ class _DiscoFloor {
           // A ring that travels outwards from the top-left corner, roughened
           // up with drifting noise so it never looks perfectly regular.
           final ring = math.sin(
-            distance * (2 * math.pi / params.waveLength) - phase,
+            distance * (2 * math.pi / waveLength.value) - _phase,
           );
           final drift = _noise.getNoise3(x * 0.15, z * 0.15, _noiseTime);
-          final y = params.waveAmplitude * ring + params.noiseAmplitude * drift;
+          final y = waveAmplitude.value * ring + noiseAmplitude.value * drift;
           lo = math.min(lo, y);
           hi = math.max(hi, y);
-          // Column-major: scale the footprint, keep the thickness.
-          transforms[index].setValues(
+          // Scale the footprint, keep the thickness.
+          transforms[index].setScaleTranslation(
             footprint,
-            0,
-            0,
-            0, //
-            0,
             1,
-            0,
-            0,
-            0,
-            0,
             footprint,
-            0,
             x,
             y,
             z,
-            1,
           );
 
-          final finalColor =
-              Color.lerp(params.colorA, params.colorB, 0.5 - 0.5 * ring) ??
-              params.colorA;
-          color.setValues(
-            finalColor.r,
-            finalColor.g,
-            finalColor.b,
-            finalColor.a,
-          );
+          final c = Color.lerp(colorA.value, colorB.value, 0.5 - 0.5 * ring)!;
+          color.setValues(c.r, c.g, c.b, c.a);
           _cubes.setInstanceColor(index, color);
         }
       }
     }, recomputeWinding: false); // positive scale only, never mirrored
-    minHeight = lo;
-    maxHeight = hi;
+    _minHeight = lo;
+    _maxHeight = hi;
   }
-}
-
-/// Writes the linear RGBA equivalent of an HSV color to [out].
-void _hsv(double hue, double saturation, double value, vm.Vector4 out) {
-  final h = (hue - hue.floorToDouble()) * 6.0;
-  double channel(double offset) {
-    final k = (offset + h) % 6.0;
-    final c =
-        1.0 - saturation * math.max(0.0, math.min(1.0, math.min(k, 4.0 - k)));
-    // Approximate sRGB to linear, so the hues look as they would in Flutter.
-    return math.pow(c, 2.2) * value;
-  }
-
-  out.setValues(channel(5), channel(3), channel(1), 1.0);
 }
