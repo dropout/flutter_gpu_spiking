@@ -36,6 +36,8 @@ class _DiscoFloorPageState extends State<DiscoFloorPage> {
   @override
   void initState() {
     super.initState();
+    _syncEnvironmentLighting();
+    params.addListener(_syncEnvironmentLighting);
     // Geometry and materials touch the engine's shader bundle, so they can
     // only be created once the static resources are loaded.
     Scene.initializeStaticResources().then((_) {
@@ -46,11 +48,16 @@ class _DiscoFloorPageState extends State<DiscoFloorPage> {
 
   @override
   void dispose() {
+    params.removeListener(_syncEnvironmentLighting);
     params.dispose();
     camera.dispose();
     stats.dispose();
     scene.dispose();
     super.dispose();
+  }
+
+  void _syncEnvironmentLighting() {
+    scene.environmentIntensity = params.environmentIntensity;
   }
 
   void _onTick(_DiscoFloor floor, Duration elapsed) {
@@ -155,8 +162,54 @@ class _DiscoFloorPageState extends State<DiscoFloorPage> {
   }
 }
 
+enum DiscoMaterial {
+  current('Current', metallicAmount: 0.1, roughness: 0.35),
+  matte('Matte', metallicAmount: 0, roughness: 1),
+  metallic('Metallic', metallicAmount: 1, roughness: 0.2),
+  clearcoat(
+    'Clearcoat',
+    metallicAmount: 0.1,
+    roughness: 0.35,
+    clearcoatAmount: 1,
+  ),
+  iridescent(
+    'Iridescent',
+    metallicAmount: 0.1,
+    roughness: 0.25,
+    iridescence: 1,
+  ),
+  glass('Glass-like', metallicAmount: 0, roughness: 0.1, transmission: 0.9);
+
+  const DiscoMaterial(
+    this.label, {
+    required this.metallicAmount,
+    required this.roughness,
+    this.clearcoatAmount = 0,
+    this.iridescence = 0,
+    this.transmission = 0,
+  });
+
+  final String label;
+  final double metallicAmount;
+  final double roughness;
+  final double clearcoatAmount;
+  final double iridescence;
+  final double transmission;
+
+  void applyTo(PhysicallyBasedMaterial material) {
+    material
+      ..metallicFactor = metallicAmount
+      ..roughnessFactor = roughness
+      ..clearcoat = clearcoatAmount
+      ..iridescence = iridescence
+      ..transmission = transmission;
+  }
+}
+
 /// Tweakable parameters of the experiment.
 class DiscoParams extends ChangeNotifier {
+  static const double defaultEnvironmentIntensity = 0.25;
+
   double waveSpeed = 0.5;
   double waveLength = 2 * math.pi / 1.5;
   double waveAmplitude = 0.2;
@@ -168,6 +221,8 @@ class DiscoParams extends ChangeNotifier {
   double density = _DiscoFloor._defaultDensity;
   Color colorA = const Color(0xFF1E1954);
   Color colorB = const Color(0xFF342B91);
+  DiscoMaterial material = DiscoMaterial.current;
+  double environmentIntensity = defaultEnvironmentIntensity;
 
   void update(void Function() change) {
     change();
@@ -184,6 +239,8 @@ class DiscoParams extends ChangeNotifier {
     density = _DiscoFloor._defaultDensity;
     colorA = const Color(0xFF1E1954);
     colorB = const Color(0xFF342B91);
+    material = DiscoMaterial.current;
+    environmentIntensity = defaultEnvironmentIntensity;
   });
 }
 
@@ -391,6 +448,28 @@ class _ControlPanel extends StatelessWidget {
                       'Color B',
                       params.colorB,
                       (c) => params.update(() => params.colorB = c),
+                    ),
+                    _slider(
+                      'Environment lighting',
+                      params.environmentIntensity,
+                      0,
+                      2,
+                      (v) =>
+                          params.update(() => params.environmentIntensity = v),
+                    ),
+                    _header('Material'),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        for (final preset in DiscoMaterial.values)
+                          ChoiceChip(
+                            label: Text(preset.label),
+                            selected: params.material == preset,
+                            visualDensity: VisualDensity.compact,
+                            onSelected: (_) =>
+                                params.update(() => params.material = preset),
+                          ),
+                      ],
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -600,15 +679,16 @@ double _seconds(Duration d) => d.inMicroseconds / 1e6;
 /// Owns the cubes and advances them each frame.
 class _DiscoFloor {
   _DiscoFloor(Scene scene, this.params) {
+    params.material.applyTo(_material);
+    _appliedMaterial = params.material;
     _cubes = InstancedMesh(
       geometry: CuboidGeometry(vm.Vector3(0.56, 0.6, 0.56)),
-      material: PhysicallyBasedMaterial()
-        ..metallicFactor = 0.1
-        ..roughnessFactor = 0.35,
+      material: _material,
     );
     _resize(_gridSize);
     // An InstancedMesh rides on a component rather than on Node(mesh:).
     scene.add(Node()..addComponent(InstancedMeshComponent(_cubes)));
+
   }
 
   /// The floor covers a fixed square area; density only changes how many cubes
@@ -629,6 +709,8 @@ class _DiscoFloor {
     ..frequency = 1.0;
 
   late final InstancedMesh _cubes;
+  final PhysicallyBasedMaterial _material = PhysicallyBasedMaterial();
+  late DiscoMaterial _appliedMaterial;
 
   int get _gridSize => (params.density * _side).round().clamp(2, 200);
 
@@ -652,6 +734,10 @@ class _DiscoFloor {
     phase += dt * params.waveSpeed;
     _noiseTime += dt * params.noiseDrift;
 
+    if (_appliedMaterial != params.material) {
+      params.material.applyTo(_material);
+      _appliedMaterial = params.material;
+    }
     if (_gridSize != _size) _resize(_gridSize);
     final half = (_size - 1) / 2;
     final spacing = _side / _size;
