@@ -22,5 +22,9 @@
   "LabParchmentFragment": {
     "type": "fragment",
     "file": "shaders/lab/parchment.frag"
+  },
+  "LabFbmWarpFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/fbm_warp.frag"
   }
 }

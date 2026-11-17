@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'experiment.dart';
 import 'params.dart';
 import 'scene_toon_experiment.dart';
+import 'sparkler_experiment.dart';
 
 /// Every experiment in the lab. Add new ones here.
 const List<LabExperiment> labExperiments = [
@@ -35,6 +36,7 @@ const List<LabExperiment> labExperiments = [
     ],
   ),
   ToonSceneExperiment(),
+  SparklerExperiment(),
   FragmentExperiment(
     name: 'Transition',
     description:
@@ -89,6 +91,35 @@ const List<LabExperiment> labExperiments = [
       ),
       ColorParam('paper', 'Paper', initial: Color(0xFFEBD9A9)),
       ColorParam('dark', 'Aged tone', initial: Color(0xFF8A5A2B)),
+    ],
+  ),
+  FragmentExperiment(
+    name: 'Domain warp',
+    description:
+        'Fractal Brownian motion folded through itself: f(p + w*f(p + w*f(p))). '
+        'Raise the octaves for detail, the warp for swirl; depth chooses how '
+        'many times the field is fed back into itself. Relief lights the field '
+        'like a surface.',
+    fragmentShader: 'LabFbmWarpFragment',
+    renderScale: 0.5,
+    params: [
+      FloatParam('scale', 'Scale', min: 0.5, max: 12, initial: 3),
+      FloatParam('octaves', 'Octaves', min: 1, max: 8, initial: 5),
+      FloatParam('lacunarity', 'Lacunarity', min: 1.2, max: 3.5, initial: 2),
+      FloatParam('gain', 'Gain', min: 0.2, max: 0.9, initial: 0.5),
+      FloatParam('warp', 'Warp amount', min: 0, max: 8, initial: 4),
+      FloatParam('speed', 'Speed', min: 0, max: 4, initial: 1),
+      ChoiceParam(
+        'depth',
+        'Warp depth',
+        options: ['None', 'Single', 'Double'],
+        initial: 2,
+      ),
+      BoolParam('relief', 'Relief lighting'),
+      ColorParam('a', 'Color A', initial: Color(0xFF101030)),
+      ColorParam('b', 'Color B', initial: Color(0xFFD8A657)),
+      ColorParam('c', 'Color C', initial: Color(0xFF1F6F8B)),
+      ColorParam('d', 'Color D', initial: Color(0xFFF3EFE0)),
     ],
   ),
 ];
