@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'experiment.dart';
 import 'params.dart';
+import 'reaction_diffusion_experiment.dart';
 import 'scene_toon_experiment.dart';
 import 'sparkler_experiment.dart';
+import 'terrain_experiment.dart';
 
 /// Every experiment in the lab. Add new ones here.
 const List<LabExperiment> labExperiments = [
@@ -37,6 +39,8 @@ const List<LabExperiment> labExperiments = [
   ),
   ToonSceneExperiment(),
   SparklerExperiment(),
+  ReactionDiffusionExperiment(),
+  TerrainExperiment(),
   FragmentExperiment(
     name: 'Transition',
     description:
@@ -89,7 +93,7 @@ const List<LabExperiment> labExperiments = [
         initial: 300,
         decimals: 0,
       ),
-      ColorParam('paper', 'Paper', initial: Color(0xFFEBD9A9)),
+      ColorParam('paper', 'Paper', initial: Color(0xFFEFBF04)),
       ColorParam('dark', 'Aged tone', initial: Color(0xFF8A5A2B)),
     ],
   ),

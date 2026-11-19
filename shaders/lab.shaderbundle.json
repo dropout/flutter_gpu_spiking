@@ -26,5 +26,17 @@
   "LabFbmWarpFragment": {
     "type": "fragment",
     "file": "shaders/lab/fbm_warp.frag"
+  },
+  "LabRdStepFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/rd_step.frag"
+  },
+  "LabRdDisplayFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/rd_display.frag"
+  },
+  "LabTerrainFragment": {
+    "type": "fragment",
+    "file": "shaders/lab/terrain.frag"
   }
 }
