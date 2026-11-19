@@ -38,13 +38,13 @@ class BoidsSim({
 
   double halfWidth = 1, halfHeight = 1;
 
-  void reset() {
+  void reset(BoidsParams p) {
     for (int i = 0; i < count; i++) {
       final double angle = 2 * math.pi * _rng.nextDouble();
       posX[i] = _rng.nextDouble() * 2 * halfWidth - halfWidth;
       posY[i] = _rng.nextDouble() * 2 * halfHeight - halfHeight;
 
-      final s = minSpeed + _rng.nextDouble() * (maxSpeed - minSpeed);
+      final s = p.minSpeed + _rng.nextDouble() * (p.maxSpeed - p.minSpeed);
       velX[i] = math.cos(angle) * s;
       velY[i] = math.sin(angle) * s;
 
@@ -98,10 +98,6 @@ class BoidsSim({
         // average raw vectors of neighbors
         final avgVel = Vector2(sumVx / neighborCount, sumVy / neighborCount);
         final avgPos = Vector2(sumPx / neighborCount, sumPy / neighborCount);
-        // final avgSep = Vector2(
-        //   sepX / neighborCount,
-        //   sepY / neighborCount,
-        // );
 
         // final forces with Reynolds steering behavior
         final alignment = avgVel.calculateReynoldsBehaviour(

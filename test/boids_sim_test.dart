@@ -8,7 +8,7 @@ const _eps = 1e-4;
 
 BoidsSim _makeSim({int count = 200, int seed = 1}) {
   final sim = BoidsSim(count: count, seed: seed);
-  sim.reset();
+  sim.reset(BoidsParams());
   return sim;
 }
 

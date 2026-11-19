@@ -37,6 +37,21 @@ class FloatParam extends LabParam {
   final int? divisions;
 }
 
+/// An integer slider. Packed as one float.
+class IntParam extends LabParam {
+  const IntParam(
+    super.id,
+    super.label, {
+    required this.min,
+    required this.max,
+    required this.initial,
+  });
+
+  final int min;
+  final int max;
+  final int initial;
+}
+
 /// A color. Packed as a whole vec4 (r, g, b, a).
 class ColorParam extends LabParam {
   const ColorParam(super.id, super.label, {required this.initial});
@@ -100,7 +115,7 @@ List<ParamSlot> layoutParams(List<LabParam> params) {
         next = (next + 3) & ~3;
         slots.add(ParamSlot(param, next));
         next += 4;
-      case FloatParam() || BoolParam() || ChoiceParam():
+      case FloatParam() || IntParam() || BoolParam() || ChoiceParam():
         slots.add(ParamSlot(param, next));
         next += 1;
     }
@@ -126,6 +141,7 @@ class LabValues extends ChangeNotifier {
     for (final p in params) {
       _values[p.id] = switch (p) {
         FloatParam() => p.initial,
+        IntParam() => p.initial,
         ColorParam() => p.initial,
         BoolParam() => p.initial,
         ChoiceParam() => p.initial,
@@ -145,6 +161,7 @@ class LabValues extends ChangeNotifier {
   }
 
   double getFloat(String id) => _values[id]! as double;
+  int getInt(String id) => _values[id]! as int;
   Color getColor(String id) => _values[id]! as Color;
   bool getBool(String id) => _values[id]! as bool;
   int getChoice(String id) => _values[id]! as int;
@@ -164,6 +181,8 @@ class LabValues extends ChangeNotifier {
       switch (slot.param) {
         case FloatParam(:final id):
           out[i] = getFloat(id);
+        case IntParam(:final id):
+          out[i] = getInt(id).toDouble();
         case BoolParam(:final id):
           out[i] = getBool(id) ? 1 : 0;
         case ChoiceParam(:final id):

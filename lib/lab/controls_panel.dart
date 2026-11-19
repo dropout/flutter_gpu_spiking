@@ -55,6 +55,21 @@ class ControlsPanel extends StatelessWidget {
             ),
           ],
         );
+      case IntParam():
+        final v = values.getInt(param.id);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            header('$glsl  $v'),
+            Slider(
+              value: v.clamp(param.min, param.max).toDouble(),
+              min: param.min.toDouble(),
+              max: param.max.toDouble(),
+              divisions: param.max - param.min,
+              onChanged: (x) => values.set(param.id, x.round()),
+            ),
+          ],
+        );
       case BoolParam():
         return SwitchListTile(
           contentPadding: EdgeInsets.zero,

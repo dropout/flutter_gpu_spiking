@@ -6,6 +6,7 @@ import 'reaction_diffusion_experiment.dart';
 import 'scene_toon_experiment.dart';
 import 'sparkler_experiment.dart';
 import 'terrain_experiment.dart';
+import 'boids_experiment.dart';
 
 /// Every experiment in the lab. Add new ones here.
 const List<LabExperiment> labExperiments = [
@@ -39,6 +40,7 @@ const List<LabExperiment> labExperiments = [
   ),
   ToonSceneExperiment(),
   SparklerExperiment(),
+  BoidsExperiment(),
   ReactionDiffusionExperiment(),
   TerrainExperiment(),
   FragmentExperiment(
@@ -125,5 +127,5 @@ const List<LabExperiment> labExperiments = [
       ColorParam('c', 'Color C', initial: Color(0xFF1F6F8B)),
       ColorParam('d', 'Color D', initial: Color(0xFFF3EFE0)),
     ],
-  ),
+  ),  
 ];
